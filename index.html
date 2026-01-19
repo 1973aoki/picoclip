@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぴこクリップ - 動画再生版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&display=swap');
+        body { font-family: 'Zen+Maru+Gothic', sans-serif; background-color: #fce7f3; }
+        
+        /* アニメーション関連 */
+        .page { display: none; min-height: 100vh; flex-direction: column; opacity: 0; transition: opacity 0.3s ease; }
+        .page.active { display: flex; opacity: 1; animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUpFade { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        
+        .stagger-item { opacity: 0; transform: translateY(10px); }
+        .page.active .stagger-item { animation: fadeInUp 0.5s ease forwards; }
+        .page.active .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+        .page.active .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+        .page.active .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+        .bouncy-btn:active { transform: scale(0.95); transition: 0.1s; }
+        .nav-item.active { color: #ec4899; transform: translateY(-5px); }
+        
+        /* 音符アイコン */
+        .note-icon { transition: all 0.2s; cursor: pointer; fill: #e5e7eb; }
+        .note-icon.active { fill: #ec4899; filter: drop-shadow(0 0 5px rgba(236, 72, 153, 0.5)); transform: scale(1.2); }
+        .bounce-in { animation: bounceIn 0.5s; }
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="flex justify-center items-start">
+
+    <div class="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
+        
+        <div id="page-home" class="page active pb-24">
+            <div class="p-4 border-b bg-white/90 backdrop-blur-md sticky top-0 z-10 flex justify-between items-center">
+                <div class="w-8"></div>
+                <h1 class="text-pink-500 font-black text-lg tracking-wider">PicoClip</h1>
+                <button class="text-gray-400 bouncy-btn">🔔</button>
+            </div>
+
+            <div class="overflow-y-auto hide-scrollbar">
+                <div class="aspect-video bg-black relative mb-4 stagger-item shadow-lg">
+                     <iframe id="main-player" class="w-full h-full" src="https://www.youtube.com/embed/L_LUpnjgPso?rel=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="stagger-item">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">YouTube</span>
+                            <span class="text-xs text-gray-400">@chill_camp</span>
+                        </div>
+                        <h2 id="video-title" class="text-xl font-bold mb-4 text-gray-800 leading-snug">最高の焚き火音で癒やされる夜...🔥</h2>
+                    </div>
+
+                    <div class="bg-pink-50 rounded-3xl p-5 text-center mb-6 stagger-item border border-pink-100 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 mb-3">あなたの「ぴこん！」度は？</p>
+                        <div class="flex justify-center gap-2 mb-4">
+                            <svg onclick="rateHome(1)" class="note-icon w-9 h-9" viewBox="0 0 24 24"></svg>
+                            <svg onclick="rateHome(2)" class="note-icon w-9 h-9" viewBox="0 0 24 24"></svg>
+                            <svg onclick="rateHome(3)" class="note-icon w-9 h-9" viewBox="0 0 24 24"></svg>
+                            <svg onclick="rateHome(4)" class="note-icon w-9 h-9" viewBox="0 0 24 24"></svg>
+                            <svg onclick="rateHome(5)" class="note-icon w-9 h-9" viewBox="0 0 24 24"></svg>
+                        </div>
+                        <div id="home-rating-label" class="h-6 mb-3"><span class="text-gray-300 text-xs font-bold">タップして評価</span></div>
+                        <button id="home-submit-btn" disabled onclick="submitRating()" class="w-full bg-gray-100 text-gray-400 font-bold py-3 rounded-xl transition-all shadow-none bouncy-btn">評価を送る ✨</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-rank" class="page pb-24 bg-gray-50">
+            <div class="p-4 bg-white sticky top-0 z-10 shadow-sm text-center">
+                <h1 class="text-pink-500 font-black text-lg">今週のトレンド</h1>
+            </div>
+            
+            <div class="p-4 space-y-4 overflow-y-auto hide-scrollbar">
+                
+                <div onclick="playVideo('C5R0bIqF-oU', '留守番中の猫が実は...🐈', true)" class="stagger-item bg-white p-4 rounded-3xl shadow-md border-2 border-yellow-200 relative overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                    <div class="absolute -right-4 -top-4 bg-yellow-300 w-16 h-16 rounded-full opacity-20"></div>
+                    <div class="absolute top-0 left-0 bg-yellow-400 text-white font-black px-3 py-1 rounded-br-2xl text-sm z-10">1位</div>
+                    
+                    <div class="flex items-start gap-4 mt-2">
+                        <div class="w-20 h-28 bg-gray-800 rounded-xl overflow-hidden relative shadow-md">
+                            <img src="https://i.ytimg.com/vi/C5R0bIqF-oU/hqdefault.jpg" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 flex items-center justify-center text-white text-2xl">▶</div>
+                        </div>
+
+                        <div class="flex-1 py-1">
+                            <h3 class="font-bold text-gray-800 text-lg mb-1 leading-tight">留守番中の猫が実は...🐈</h3>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-black text-white text-[9px] px-1.5 py-0.5 rounded font-bold">Shorts</span>
+                                <span class="text-xs text-gray-400">@AaronsAnimals</span>
+                            </div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-pink-500 font-black text-2xl">♪4.9</span>
+                                <span class="text-[10px] text-gray-400">10k 評価</span>
+                            </div>
+                            <p class="text-[10px] text-pink-400 font-bold mt-2">👇 タップして再生！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="playVideo('rTxZ_p8d6m0', '絶対失敗しないパンケーキ🥞')" class="stagger-item bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 bouncy-btn cursor-pointer">
+                    <div class="text-2xl font-bold text-gray-400 w-6 text-center">2</div>
+                    <div class="w-16 h-12 bg-gray-200 rounded-lg overflow-hidden relative">
+                         <img src="https://i.ytimg.com/vi/rTxZ_p8d6m0/mqdefault.jpg" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-700 text-sm">絶対失敗しないパンケーキ🥞</h3>
+                        <span class="text-pink-400 font-bold text-sm">♪4.8</span>
+                    </div>
+                </div>
+
+                <div onclick="playVideo('jfKfPfyJRdk', '勉強用BGM - Lofi Hip Hop 📚')" class="stagger-item bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 bouncy-btn cursor-pointer">
+                    <div class="text-2xl font-bold text-gray-400 w-6 text-center">3</div>
+                    <div class="w-16 h-12 bg-gray-200 rounded-lg overflow-hidden relative">
+                        <img src="https://i.ytimg.com/vi/jfKfPfyJRdk/mqdefault.jpg" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-700 text-sm">勉強用BGM - Lofi Hip Hop 📚</h3>
+                        <span class="text-pink-400 font-bold text-sm">♪4.6</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-post" class="page pb-24 bg-white">
+            <div class="p-4 border-b flex justify-between items-center">
+                <button class="text-gray-400 font-bold text-sm bouncy-btn">戻る</button>
+                <h1 class="text-gray-800 font-bold">新規投稿</h1>
+                <button class="text-pink-500 font-bold text-sm bouncy-btn">投稿</button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="stagger-item space-y-2">
+                    <label class="text-xs font-bold text-gray-500">動画のURL (YouTube)</label>
+                    <input type="text" id="url-input" oninput="checkUrl()" placeholder="例: https://youtu.be/..." class="w-full p-4 bg-gray-50 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all">
+                </div>
+
+                <div id="preview-area" class="stagger-item aspect-video bg-pink-50 rounded-2xl border-2 border-dashed border-pink-200 flex flex-col items-center justify-center text-pink-300 overflow-hidden relative">
+                    <div id="preview-placeholder" class="text-center">
+                        <span class="text-3xl mb-2 block">📥</span>
+                        <span class="text-xs font-bold">URLを貼ると動画が出るよ</span>
+                    </div>
+                    <iframe id="preview-frame" class="w-full h-full hidden" src="" frameborder="0"></iframe>
+                </div>
+
+                <div class="stagger-item">
+                    <label class="text-xs font-bold text-gray-500 block mb-2">おすすめ度</label>
+                    <div class="flex justify-between gap-2">
+                        <button class="flex-1 py-2 rounded-xl border border-gray-200 text-gray-400 font-bold hover:bg-pink-50 hover:text-pink-500 transition bouncy-btn">♪1</button>
+                        <button class="flex-1 py-2 rounded-xl border border-gray-200 text-gray-400 font-bold hover:bg-pink-50 hover:text-pink-500 transition bouncy-btn">♪3</button>
+                        <button class="flex-1 py-2 rounded-xl bg-pink-500 text-white font-bold shadow-md bouncy-btn">♪5</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white/95 backdrop-blur border-t border-gray-100 py-2 px-8 flex justify-between items-end sticky bottom-0 z-30 h-20 pb-6 rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.03)] w-full max-w-md absolute">
+            <button onclick="showPage('home')" id="nav-home" class="nav-item active flex flex-col items-center w-16 bouncy-btn"><span class="text-2xl mb-1">🏠</span><span class="text-[10px] font-bold">ホーム</span></button>
+            <button onclick="showPage('post')" id="nav-post" class="nav-item flex flex-col items-center w-16 bouncy-btn relative group">
+                <div class="absolute -top-10 bg-gradient-to-tr from-pink-500 to-pink-400 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-pink-200 group-hover:scale-110 transition-transform duration-300"><span class="text-2xl font-bold pb-1">＋</span></div>
+                <span class="text-[10px] font-bold mt-5 text-gray-400 group-hover:text-pink-500">投稿</span>
+            </button>
+            <button onclick="showPage('rank')" id="nav-rank" class="nav-item flex flex-col items-center w-16 bouncy-btn"><span class="text-2xl mb-1">👑</span><span class="text-[10px] font-bold">ランク</span></button>
+        </div>
+    </div>
+
+    <script>
+        // === 画面切り替え ===
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            const nav = document.getElementById('nav-' + pageId);
+            if(nav) nav.classList.add('active');
+        }
+
+        // === 動画再生機能 (重要！) ===
+        function playVideo(videoId, title, isVertical = false) {
+            // 1. ホーム画面に移動
+            showPage('home');
+            
+            // 2. プレイヤーのURLを書き換え
+            const player = document.getElementById('main-player');
+
+            // 自動再生をオフにする（クリックして手動で再生させる）
+            player.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
+            
+            // 3. タイトル変更
+            document.getElementById('video-title').innerText = title;
+
+            // 4. 縦型動画の場合はアスペクト比を変える（TikTok風）
+            const container = player.parentElement;
+            if(isVertical) {
+                container.classList.remove('aspect-video');
+                container.classList.add('aspect-[9/16]');
+            } else {
+                container.classList.add('aspect-video');
+                container.classList.remove('aspect-[9/16]');
+            }
+        }
+
+        // === 投稿プレビュー機能 ===
+        function checkUrl() {
+            const input = document.getElementById('url-input').value;
+            const placeholder = document.getElementById('preview-placeholder');
+            const frame = document.getElementById('preview-frame');
+            
+            // YouTubeのIDを抽出する魔法の呪文（正規表現）
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = input.match(regExp);
+
+            if (match && match[2].length === 11) {
+                // IDが見つかったら表示
+                const videoId = match[2];
+                placeholder.classList.add('hidden');
+                frame.classList.remove('hidden');
+                frame.src = `https://www.youtube.com/embed/${videoId}`;
+            } else {
+                // 無効なURLなら隠す
+                placeholder.classList.remove('hidden');
+                frame.classList.add('hidden');
+            }
+        }
+
+        // === 評価ロジック ===
+        const notePath = '<path stroke="none" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>';
+        document.querySelectorAll('.note-icon').forEach(n => n.innerHTML = notePath);
+        const labels = ["うーん... いまいち 🤔", "まあまあかな 🙂", "ふつうに良い！ 👍", "これはおすすめ！ ✨", "神動画キタコレ！！ 👑"];
+        let currentScore = 0;
+        function rateHome(score) {
+            currentScore = score;
+            const icons = document.querySelectorAll('#page-home .note-icon');
+            icons.forEach((icon, index) => index < score ? icon.classList.add('active') : icon.classList.remove('active'));
+            document.getElementById('home-rating-label').innerHTML = `<span class="text-pink-500 font-bold text-sm bounce-in">${labels[score - 1]}</span>`;
+            const btn = document.getElementById('home-submit-btn');
+            btn.disabled = false;
+            btn.className = "w-full bg-pink-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-pink-200 hover:bg-pink-600 active:scale-95 bouncy-btn";
+        }
+        function submitRating() {
+            if(currentScore > 0) {
+                alert(`♪${currentScore} で評価しました！\nぴこん！✨`);
+                const btn = document.getElementById('home-submit-btn');
+                btn.innerText = "送信完了！";
+                btn.className = "w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-200 bouncy-btn";
+                btn.disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>
