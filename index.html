@@ -425,7 +425,19 @@
                 const votedMark = votedVideoIds.has(video.id) ? '<span class="absolute top-2 right-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-bold z-20">評価済</span>' : '';
                 
                 const service = video.service || "youtube";
-                const thumbUrl = video.thumbnail ? video.thumbnail : `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+                // ★サムネイル画像の決定 (修正版)
+                let thumbUrl = video.thumbnail;
+                
+                // 画像がない場合の救済措置
+                if (!thumbUrl) {
+                    if (service === "tiktok") {
+                        // TikTok用の仮画像（フリー素材のロゴなど）
+                        thumbUrl = "https://cdn.pixabay.com/photo/2021/06/15/12/28/tiktok-6338430_960_720.png";
+                    } else {
+                        // YouTube用の画像
+                        thumbUrl = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+                    }
+                }
                 const tagColor = service === "tiktok" ? "bg-black" : "bg-red-500";
                 const tagName = service === "tiktok" ? "TikTok" : "YouTube";
 
