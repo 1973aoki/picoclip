@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぴこクリップ管理画面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap');
+        body { font-family: 'Zen+Maru+Gothic', sans-serif; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div id="login-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center max-w-sm w-full">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">管理者ログイン</h2>
+            <input type="password" id="password-input" placeholder="パスワードを入力" class="w-full p-3 border rounded-lg mb-4 text-center text-lg">
+            <button onclick="checkLogin()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">ログイン</button>
+            <p id="error-msg" class="text-red-500 text-sm mt-3 hidden">パスワードが違います</p>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-black text-gray-800">🛠️ 管理ダッシュボード</h1>
+            <a href="index.html" class="text-blue-600 font-bold hover:underline">アプリに戻る ↗</a>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
+                            <th class="p-4 border-b">サムネ</th>
+                            <th class="p-4 border-b">タイトル / ID</th>
+                            <th class="p-4 border-b">スコア (票数)</th>
+                            <th class="p-4 border-b">サービス</th>
+                            <th class="p-4 border-b text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-list" class="divide-y divide-gray-100">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        <p class="text-center text-gray-400 text-xs mt-4" id="total-count">読み込み中...</p>
+    </div>
+
+    <script>
+        // ==========================================
+        // 🔥 ここに index.html と同じAPIキーを貼る！
+        // ==========================================
+        const firebaseConfig = {
+  	        apiKey: "AIzaSyBjkR_CDNmSkelT8LZ6NKCVvLwzf3TX0S0",
+  	        authDomain: "picoclip-9bda2.firebaseapp.com",
+	          databaseURL: "https://picoclip-9bda2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  	        projectId: "picoclip-9bda2",
+  	        storageBucket: "picoclip-9bda2.firebasestorage.app",
+  	        messagingSenderId: "498414735492",
+  	        appId: "1:498414735492:web:cd190d40ebf973fb98f2d1"
+	    };
+        // ==========================================
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 🔐 簡易パスワード設定 (好きな文字に変えてOK)
+        const ADMIN_PASSWORD = "admin"; 
+
+        function checkLogin() {
+            const input = document.getElementById('password-input').value;
+            if (input === ADMIN_PASSWORD) {
+                document.getElementById('login-modal').style.display = 'none';
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadData();
+            } else {
+                document.getElementById('error-msg').classList.remove('hidden');
+            }
+        }
+
+        function loadData() {
+            db.ref('videos').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const list = document.getElementById('admin-list');
+                list.innerHTML = "";
+                
+                if (!data) {
+                    document.getElementById('total-count').innerText = "データがありません";
+                    return;
+                }
+
+                const videos = Object.keys(data).map(key => data[key]).reverse(); // 新しい順
+                document.getElementById('total-count').innerText = `全 ${videos.length} 件`;
+
+                videos.forEach(video => {
+                    // サムネ処理
+                    let thumb = video.thumbnail;
+                    if (!thumb) {
+                        if (video.service === "tiktok" || /^\d+$/.test(video.id)) {
+                            thumb = "https://cdn-icons-png.flaticon.com/512/3046/3046121.png";
+                        } else {
+                            thumb = `https://i.ytimg.com/vi/${video.id}/default.jpg`;
+                        }
+                    }
+
+                    const row = `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-3 w-16">
+                                <img src="${thumb}" class="w-10 h-10 rounded object-cover bg-gray-200">
+                            </td>
+                            <td class="p-3">
+                                <div class="font-bold text-gray-800 text-sm line-clamp-1">${video.title}</div>
+                                <div class="text-xs text-gray-400 font-mono">${video.id}</div>
+                            </td>
+                            <td class="p-3">
+                                <span class="font-bold text-pink-500">♪${video.score.toFixed(2)}</span>
+                                <span class="text-xs text-gray-400">(${video.votes}票)</span>
+                            </td>
+                            <td class="p-3">
+                                <span class="text-xs font-bold px-2 py-1 rounded-full ${video.service === 'tiktok' ? 'bg-black text-white' : 'bg-red-100 text-red-600'}">
+                                    ${video.service || 'youtube'}
+                                </span>
+                            </td>
+                            <td class="p-3 text-right space-x-2">
+                                <button onclick="resetVideo('${video.id}')" class="text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded hover:bg-yellow-200 font-bold">リセット</button>
+                                <button onclick="deleteVideo('${video.id}')" class="text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 font-bold">削除</button>
+                            </td>
+                        </tr>
+                    `;
+                    list.innerHTML += row;
+                });
+            });
+        }
+
+        // 🗑️ 削除機能
+        function deleteVideo(id) {
+            if(confirm('本当に削除しますか？\nこの操作は取り消せません！')) {
+                db.ref('videos/' + id).remove()
+                    .then(() => alert('削除しました'))
+                    .catch(e => alert('エラー: ' + e.message));
+            }
+        }
+
+        // 🔄 リセット機能 (スコアを初期値に戻す)
+        function resetVideo(id) {
+            if(confirm('スコアと投票数をリセットしますか？')) {
+                db.ref('videos/' + id).update({
+                    score: 5,
+                    votes: 1
+                }).then(() => alert('リセットしました'));
+            }
+        }
+    </script>
+</body>
+</html>
