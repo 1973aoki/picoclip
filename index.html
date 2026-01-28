@@ -437,7 +437,7 @@
             }
         }
 
-        // === 👑 ランキング生成 ===
+        // === 👑 ランキング生成 (Shortsタグ表示対応) ===
         function renderRanking() {
             const container = document.getElementById('ranking-container');
             if (!container) return;
@@ -452,30 +452,35 @@
                 const votedMark = votedVideoIds.has(video.id) ? '<span class="absolute top-2 right-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-bold z-20">評価済</span>' : '';
                 
                 const service = video.service || "youtube";
-                // ★サムネイル画像の決定 (修正版：古いデータも救済します)
-                let thumbUrl = video.thumbnail;
                 
-                // サービス判定の強化（IDが数字だけならTikTokとみなす！）
+                // サムネイル処理
+                let thumbUrl = video.thumbnail;
                 let currentService = service;
                 if (/^\d+$/.test(video.id)) {
                     currentService = "tiktok";
                 }
-
-                // 画像がない場合の救済措置
                 if (!thumbUrl) {
                     if (currentService === "tiktok") {
-                        // TikTok用の仮画像（音符マークの画像）
                         thumbUrl = "https://cdn-icons-png.flaticon.com/512/3046/3046121.png";
                     } else {
-                        // YouTube用の画像
                         thumbUrl = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
                     }
                 }
-                
-                // タグの表示も合わせる
-                const tagColor = currentService === "tiktok" ? "bg-black" : "bg-red-500";
-                const tagName = currentService === "tiktok" ? "TikTok" : "YouTube";
 
+                // ★ここを修正！タグの名前と色を決めるロジック
+                let tagName = "YouTube";
+                let tagColor = "bg-red-500";
+
+                if (currentService === "tiktok") {
+                    tagName = "TikTok";
+                    tagColor = "bg-black";
+                } else if (video.isVertical) {
+                    // YouTubeで縦長なら「Shorts」にする！
+                    tagName = "Shorts";
+                    tagColor = "bg-red-600"; // ショートは少し濃い赤に
+                }
+
+                // --- ここから下は表示用のHTML ---
                 if (rank === 1) {
                     html += `
                     <div onclick="playVideo('${video.id}', '${video.title}', ${video.isVertical}, '${service}')" class="stagger-item bg-white p-4 rounded-3xl shadow-md border-2 border-yellow-200 relative overflow-hidden cursor-pointer active:scale-95 transition-transform" style="${delayStyle}">
@@ -484,11 +489,11 @@
                         <div class="absolute top-0 left-0 bg-yellow-400 text-white font-black px-3 py-1 rounded-br-2xl text-sm z-10">1位</div>
                         <div class="flex items-start gap-4 mt-2">
                             <div class="w-20 h-28 bg-gray-800 rounded-xl overflow-hidden relative shadow-md flex-shrink-0">
-                                <img src="${thumbUrl}" class="w-full h-full object-cover">
+                                <img src="${thumbUrl}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentNode.style.backgroundColor='#000';">
                                 <div class="absolute inset-0 flex items-center justify-center text-white text-2xl">▶</div>
                             </div>
                             <div class="flex-1 py-1">
-                                <h3 class="font-bold text-gray-800 text-lg mb-1 leading-tight">${video.title}</h3>
+                                <h3 class="font-bold text-gray-800 text-lg mb-1 leading-tight line-clamp-2">${video.title}</h3>
                                 <div class="flex items-center gap-2 mb-2">
                                     <span class="${tagColor} text-white text-[10px] px-2 py-0.5 rounded-full font-bold">${tagName}</span>
                                 </div>
@@ -505,7 +510,7 @@
                         ${votedMark}
                         <div class="text-2xl font-bold text-gray-400 w-6 text-center">${rank}</div>
                         <div class="w-16 h-12 bg-gray-200 rounded-lg overflow-hidden relative flex-shrink-0">
-                             <img src="${thumbUrl}" class="w-full h-full object-cover">
+                             <img src="${thumbUrl}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentNode.style.backgroundColor='#000';">
                         </div>
                         <div class="flex-1 min-w-0">
                             <h3 class="font-bold text-gray-700 text-sm truncate">${video.title}</h3>
