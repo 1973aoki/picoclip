@@ -467,17 +467,17 @@
                     }
                 }
 
-                // ★ここを修正！タグの名前と色を決めるロジック
-                let tagName = "YouTube";
+                // ★ここを修正！ (保存されたタグ情報を優先するようにしました)
+                let tagName = video.tag || "YouTube"; // 保存されたタグを使う！
                 let tagColor = "bg-red-500";
 
-                if (currentService === "tiktok") {
+                if (currentService === "tiktok" || tagName === "TikTok") {
                     tagName = "TikTok";
                     tagColor = "bg-black";
-                } else if (video.isVertical) {
-                    // YouTubeで縦長なら「Shorts」にする！
+                } else if (video.isVertical || tagName === "Shorts") {
+                    // 縦長、またはタグがShortsなら
                     tagName = "Shorts";
-                    tagColor = "bg-red-600"; // ショートは少し濃い赤に
+                    tagColor = "bg-red-600";
                 }
 
                 // --- ここから下は表示用のHTML ---
