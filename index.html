@@ -334,9 +334,10 @@
             }
         }
 
-        // === 🔥 投稿機能 (YouTube & TikTok & Noembed) ===
+        // === 🔥 投稿機能 (TikTok完全対応・最強版) ===
         function submitPost() {
             const url = document.getElementById('url-input').value;
+            
             const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
             const ttRegExp = /tiktok\.com\/@.+\/video\/(\d+)/;
 
@@ -357,14 +358,32 @@
                 return;
             }
 
-            // タイトルとサムネを取得
-            const apiUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
+            // ★ここが進化！サービスによって使う道具を変える
+            let apiUrl = "";
+            if (service === "youtube") {
+                apiUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
+            } else {
+                // TikTok専用の強力なAPI (TikWM)
+                apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
+            }
 
             fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
-                    const realTitle = data.title || "タイトル不明";
-                    const thumbnail = data.thumbnail_url || ""; 
+                    let realTitle = "タイトル不明";
+                    let thumbnail = "";
+
+                    // データを取り出す場所がサービスによって違うので振り分け
+                    if (service === "youtube") {
+                        realTitle = data.title || "タイトル不明";
+                        thumbnail = data.thumbnail_url || "";
+                    } else {
+                        // TikTok (TikWM) の場合
+                        if (data.data) {
+                            realTitle = data.data.title || "TikTok動画";
+                            thumbnail = data.data.cover || ""; // ここで本物の画像GET!
+                        }
+                    }
 
                     const newVideo = {
                         id: videoId,
@@ -372,8 +391,8 @@
                         title: realTitle,
                         thumbnail: thumbnail, 
                         tag: service === "tiktok" ? "TikTok" : "新着",
-                        score: 5,  // 5点スタート
-                        votes: 1,  // 1票スタート
+                        score: 5,
+                        votes: 1,
                         isVertical: service === "tiktok" ? true : false 
                     };
                     
@@ -385,7 +404,7 @@
                     showPage('rank');
                 })
                 .catch((error) => {
-                    alert("エラー: " + error.message);
+                    alert("取得エラー: " + error.message);
                 });
         }
 
