@@ -425,21 +425,29 @@
                 const votedMark = votedVideoIds.has(video.id) ? '<span class="absolute top-2 right-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-bold z-20">評価済</span>' : '';
                 
                 const service = video.service || "youtube";
-                // ★サムネイル画像の決定 (修正版)
+                // ★サムネイル画像の決定 (修正版：古いデータも救済します)
                 let thumbUrl = video.thumbnail;
                 
+                // サービス判定の強化（IDが数字だけならTikTokとみなす！）
+                let currentService = service;
+                if (/^\d+$/.test(video.id)) {
+                    currentService = "tiktok";
+                }
+
                 // 画像がない場合の救済措置
                 if (!thumbUrl) {
-                    if (service === "tiktok") {
-                        // TikTok用の仮画像（フリー素材のロゴなど）
-                        thumbUrl = "https://cdn.pixabay.com/photo/2021/06/15/12/28/tiktok-6338430_960_720.png";
+                    if (currentService === "tiktok") {
+                        // TikTok用の仮画像（音符マークの画像）
+                        thumbUrl = "https://cdn-icons-png.flaticon.com/512/3046/3046121.png";
                     } else {
                         // YouTube用の画像
                         thumbUrl = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
                     }
                 }
-                const tagColor = service === "tiktok" ? "bg-black" : "bg-red-500";
-                const tagName = service === "tiktok" ? "TikTok" : "YouTube";
+                
+                // タグの表示も合わせる
+                const tagColor = currentService === "tiktok" ? "bg-black" : "bg-red-500";
+                const tagName = currentService === "tiktok" ? "TikTok" : "YouTube";
 
                 if (rank === 1) {
                     html += `
