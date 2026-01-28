@@ -337,15 +337,18 @@
             }
         }
 
-        // === 🔥 投稿機能 (TikTok完全対応・最強版) ===
+        // === 🔥 投稿機能 (YouTube Shorts & TikTok 対応版) ===
         function submitPost() {
             const url = document.getElementById('url-input').value;
             
-            const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            // ★ここ修正: |shorts\/ を追加してショート動画も認識させる！
+            const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
             const ttRegExp = /tiktok\.com\/@.+\/video\/(\d+)/;
 
             let videoId = "";
             let service = "";
+            // ★ショートかどうかを判定するフラグ
+            let isShorts = false;
 
             const ytMatch = url.match(ytRegExp);
             const ttMatch = url.match(ttRegExp);
@@ -353,6 +356,10 @@
             if (ytMatch && ytMatch[2].length === 11) {
                 videoId = ytMatch[2];
                 service = "youtube";
+                // URLに "shorts" が含まれていたら縦長認定する
+                if (url.includes("shorts")) {
+                    isShorts = true;
+                }
             } else if (ttMatch) {
                 videoId = ttMatch[1];
                 service = "tiktok";
@@ -361,12 +368,11 @@
                 return;
             }
 
-            // ★ここが進化！サービスによって使う道具を変える
+            // APIの振り分け
             let apiUrl = "";
             if (service === "youtube") {
                 apiUrl = `https://noembed.com/embed?url=${encodeURIComponent(url)}`;
             } else {
-                // TikTok専用の強力なAPI (TikWM)
                 apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`;
             }
 
@@ -376,15 +382,13 @@
                     let realTitle = "タイトル不明";
                     let thumbnail = "";
 
-                    // データを取り出す場所がサービスによって違うので振り分け
                     if (service === "youtube") {
                         realTitle = data.title || "タイトル不明";
                         thumbnail = data.thumbnail_url || "";
                     } else {
-                        // TikTok (TikWM) の場合
                         if (data.data) {
                             realTitle = data.data.title || "TikTok動画";
-                            thumbnail = data.data.cover || ""; // ここで本物の画像GET!
+                            thumbnail = data.data.cover || "";
                         }
                     }
 
@@ -393,16 +397,17 @@
                         service: service, 
                         title: realTitle,
                         thumbnail: thumbnail, 
-                        tag: service === "tiktok" ? "TikTok" : "新着",
+                        tag: service === "tiktok" ? "TikTok" : (isShorts ? "Shorts" : "新着"), // タグも変える
                         score: 5,
                         votes: 1,
-                        isVertical: service === "tiktok" ? true : false 
+                        // ★TikTok または YouTubeショート なら縦長(true)にする
+                        isVertical: (service === "tiktok" || isShorts) ? true : false 
                     };
                     
                     return db.ref('videos/' + videoId).set(newVideo);
                 })
                 .then(() => {
-                    alert(`【${service === 'youtube' ? 'YouTube' : 'TikTok'}】を投稿しました！\nランキングに追加されます✨`);
+                    alert(`投稿しました！\nランキングに追加されます✨`);
                     document.getElementById('url-input').value = "";
                     showPage('rank');
                 })
